@@ -15,6 +15,7 @@ config_ingredient = Ingredient("cfg")
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda:0" if use_cuda else "cpu")
 
+
 @config_ingredient.config
 def cfg():
     hyp = {
@@ -72,6 +73,7 @@ def crsae_simulated_test():
         "info_period": 10000,
         "device": device,
     }
+
 
 @config_ingredient.named_config
 def crsae_mnist_test():

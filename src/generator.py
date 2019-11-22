@@ -18,28 +18,28 @@ sys.path.append("src/")
 
 import utils
 
-def get_MNIST_loaders(batch_size, shuffle = False, train_batch = None, test_batch = None):
+
+def get_MNIST_loaders(batch_size, shuffle=False, train_batch=None, test_batch=None):
     if train_batch == None:
-        train_loader = get_MNIST_loader(batch_size, trainable=True, shuffle = shuffle)
+        train_loader = get_MNIST_loader(batch_size, trainable=True, shuffle=shuffle)
     else:
-        train_loader = get_MNIST_loader(train_batch, trainable=True, shuffle = shuffle)
+        train_loader = get_MNIST_loader(train_batch, trainable=True, shuffle=shuffle)
 
     if test_batch == None:
-        test_loader = get_MNIST_loader(batch_size, trainable=False, shuffle = shuffle)
+        test_loader = get_MNIST_loader(batch_size, trainable=False, shuffle=shuffle)
     else:
-        test_loader = get_MNIST_loader(test_batch, trainable=False, shuffle = shuffle)
+        test_loader = get_MNIST_loader(test_batch, trainable=False, shuffle=shuffle)
     return train_loader, test_loader
 
-def get_MNIST_loader(batch_size, trainable=True, shuffle = False):
+
+def get_MNIST_loader(batch_size, trainable=True, shuffle=False):
     loader = torch.utils.data.DataLoader(
         torchvision.datasets.MNIST(
             "../data",
             train=trainable,
             download=True,
             transform=torchvision.transforms.Compose(
-                [
-                    torchvision.transforms.ToTensor(),
-                ]
+                [torchvision.transforms.ToTensor()]
             ),
         ),
         batch_size=batch_size,
@@ -47,8 +47,9 @@ def get_MNIST_loader(batch_size, trainable=True, shuffle = False):
     )
     return loader
 
+
 class SparseVectorDataset(Dataset):
-    def __init__(self, n, dim, ones,transform = None, seed = None):
+    def __init__(self, n, dim, ones, transform=None, seed=None):
         self.samples = generate_sparse_samples(n, dim, ones, seed)
         self.transform = transform
 
@@ -56,16 +57,17 @@ class SparseVectorDataset(Dataset):
         return self.samples.shape[1]
 
     def __getitem__(self, idx):
-        sample = self.samples[:,idx].reshape(-1,1,1)
+        sample = self.samples[:, idx].reshape(-1, 1, 1)
         if self.transform:
             sample = self.transform(sample).float()
 
         return sample
 
+
 class SparseCompImageDataset(Dataset):
-    def __init__(self, n, dim, ones, real_H, phi, transform = None):
+    def __init__(self, n, dim, ones, real_H, phi, transform=None):
         self.sparse_vectors = generate_sparse_samples(n, dim, ones)
-        print (self.sparse_vectors.shape)
+        print(self.sparse_vectors.shape)
         self.comp_img = np.dot(real_H, self.sparse_vectors)
         self.img = np.dot(phi, self.comp_img)
         self.samples = np.dot(phi.T, self.img)
@@ -75,12 +77,13 @@ class SparseCompImageDataset(Dataset):
         return self.samples.shape[1]
 
     def __getitem__(self, idx):
-        sample = self.samples[:,idx].reshape(-1,1,1)
-        img = self.img[:,idx].reshape(-1,1,1)
+        sample = self.samples[:, idx].reshape(-1, 1, 1)
+        img = self.img[:, idx].reshape(-1, 1, 1)
         if self.transform:
             sample = self.transform(sample).float()
             img = self.transform(img).float()
         return sample, img
+
 
 class EncodingDataset(Dataset):
     def __init__(self, data_loader, net, device=None, transform=None, seed=None):
@@ -94,7 +97,7 @@ class EncodingDataset(Dataset):
             if len(net.phi.size()) == 3:
                 i = idx % net.phi.size(0)
 
-            _, enc, _ = net((i,img))
+            _, enc, _ = net((i, img))
 
             self.samples.append(enc)
             self.c.append(c)
@@ -110,29 +113,41 @@ class EncodingDataset(Dataset):
         return self.samples.shape[0]
 
     def __getitem__(self, idx):
-        sample = self.samples[idx].reshape(-1,self.D_enc,1)
+        sample = self.samples[idx].reshape(-1, self.D_enc, 1)
 
         if self.transform:
             sample = self.transform(sample).float()
 
         return sample, self.c[idx]
 
+
 def generate_sparse_samples(n, dim, ones, seed=None, unif=True):
-    samples = np.zeros((n,dim))
+    samples = np.zeros((n, dim))
     np.random.seed(seed)
     for i in range(n):
-        ind = np.random.choice(dim, ones, replace = False)
+        ind = np.random.choice(dim, ones, replace=False)
         if unif:
             # draws amplitude from [-5,-4] U [4,5] uniformly
-            samples[i][ind] = np.random.uniform(4, 5, ones) * ((np.random.uniform(0,1, ones) > .5 ) * 2 - 1)
+            samples[i][ind] = np.random.uniform(4, 5, ones) * (
+                (np.random.uniform(0, 1, ones) > .5) * 2 - 1
+            )
         else:
             # amplitude is 1 or -1 .5 prob of each
-            samples[i][ind] = np.array([1] * ones) * ((np.random.uniform(0,1, ones) > .5 ) * 2 - 1)
+            samples[i][ind] = np.array([1] * ones) * (
+                (np.random.uniform(0, 1, ones) > .5) * 2 - 1
+            )
     return samples.T
 
+
 def generate_sparse_phi(sparsity, num_phi, D_enc, D_img):
-    phis = [torch.tensor(generate_sparse_samples(D_img, D_enc, sparsity, unif = False)).float().t() for _ in range(num_phi)]
+    phis = [
+        torch.tensor(generate_sparse_samples(D_img, D_enc, sparsity, unif=False))
+        .float()
+        .t()
+        for _ in range(num_phi)
+    ]
     return torch.stack(phis)
+
 
 def generate_simulated_data(hyp):
     seed = hyp["seed"]
@@ -152,10 +167,17 @@ def generate_simulated_data(hyp):
     H_init = utils.normalize(real_H * (1 - randomness) + noise)
     phis = generate_sparse_phi(sparsity, num_phis, D_org, D_comp)
 
-    dataset = SparseVectorDataset(num_samples, D_enc, num_nonzero, transform = torchvision.transforms.Compose([torchvision.transforms.ToTensor()]), seed = seed)
-    data_loader = DataLoader(dataset, batch_size = batch_size)
+    dataset = SparseVectorDataset(
+        num_samples,
+        D_enc,
+        num_nonzero,
+        transform=torchvision.transforms.Compose([torchvision.transforms.ToTensor()]),
+        seed=seed,
+    )
+    data_loader = DataLoader(dataset, batch_size=batch_size)
 
     return real_H, H_init, phis, data_loader
+
 
 def get_encoding_loaders(train_loader, test_loader, net, hyp):
     train_dataset = EncodingDataset(train_loader, net, hyp["device"])

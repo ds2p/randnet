@@ -52,13 +52,14 @@ def run(cfg):
         train_loader, test_loader = generator.get_MNIST_loaders(
             hyp["batch_size"], shuffle=hyp["shuffle"]
         )
-        phis = F.normalize(torch.randn(hyp["num_phis"] , hyp["D_comp"], hyp["D_org"]), dim = 1)
+        phis = F.normalize(
+            torch.randn(hyp["num_phis"], hyp["D_comp"], hyp["D_org"]), dim=1
+        )
         H_init = None
     elif hyp["dataset"] == "simulated":
         real_H, H_init, phis, train_loader = generator.generate_simulated_data(hyp)
     else:
         print("ERROR: dataset loader is not implemented.")
-
 
     print("create model.")
     if hyp["network"] == "CRsAEDense":
@@ -82,57 +83,34 @@ def run(cfg):
         net.classifier.requires_grad = False
 
     print("train auto-encoder.")
-    if hyp["dataset"] ==  "simulated":
+    if hyp["dataset"] == "simulated":
         if hyp["network"] == "CRsAEDense":
             err = trainer.train_ae_simulated(
-                net,
-                train_loader,
-                hyp,
-                criterion,
-                optimizer,
-                real_H,
-                PATH,
+                net, train_loader, hyp, criterion, optimizer, real_H, PATH
             )
         elif hyp["network"] == "CRsAERandProj":
             err = trainer.train_randproj_ae_simulated(
-                net,
-                train_loader,
-                hyp,
-                criterion,
-                optimizer,
-                real_H,
-                phis,
-                PATH,
+                net, train_loader, hyp, criterion, optimizer, real_H, phis, PATH
             )
 
     else:
-        err = trainer.train_ae(
-            net,
-            train_loader,
-            hyp,
-            criterion,
-            optimizer,
-            PATH,
-        )
+        err = trainer.train_ae(net, train_loader, hyp, criterion, optimizer, PATH)
 
     if hyp["classification"]:
         net.H.requires_grad = False
         net.classifier.requires_grad = True
 
         optimizer.zero_grad()
-        enc_tr_loader, enc_te_loader = generator.get_encoding_loaders(train_loader, test_loader, net, hyp)
+        enc_tr_loader, enc_te_loader = generator.get_encoding_loaders(
+            train_loader, test_loader, net, hyp
+        )
 
         criterion_class = torch.nn.CrossEntropyLoss()
 
         print("train classifier.")
         net.encoding_mode = True
         acc = trainer.train_classifier_encodings(
-            net,
-            enc_tr_loader,
-            hyp,
-            criterion_class,
-            optimizer,
-            enc_te_loader,
+            net, enc_tr_loader, hyp, criterion_class, optimizer, enc_te_loader
         )
 
         final_acc = (

@@ -12,8 +12,9 @@ import numpy as np
 
 import utils
 
+
 class CRsAEDense(torch.nn.Module):
-    def __init__(self, hyp, H = None):
+    def __init__(self, hyp, H=None):
         super(CRsAEDense, self).__init__()
 
         self.T = hyp["num_iters"]
@@ -24,17 +25,18 @@ class CRsAEDense(torch.nn.Module):
         self.device = hyp["device"]
 
         if H is None:
-            self.H = torch.nn.Parameter(F.normalize(torch.randn(self.D_in, self.D_enc), dim = 0))
+            self.H = torch.nn.Parameter(
+                F.normalize(torch.randn(self.D_in, self.D_enc), dim=0)
+            )
         else:
             self.H = torch.nn.Parameter(H)
-
 
         self.H = self.H.to(self.device)
 
         self.relu = torch.nn.ReLU()
 
     def normalize(self):
-        self.H.data = F.normalize(self.H.data, dim = 0)
+        self.H.data = F.normalize(self.H.data, dim=0)
 
     def forward(self, x):
         num_batches = x.shape[0]
@@ -58,8 +60,9 @@ class CRsAEDense(torch.nn.Module):
 
         return z, x_new
 
+
 class CRsAERandProj(torch.nn.Module):
-    def __init__(self, hyp, H = None, phi = None):
+    def __init__(self, hyp, H=None, phi=None):
         super(CRsAERandProj, self).__init__()
 
         self.T = hyp["num_iters"]
@@ -72,12 +75,12 @@ class CRsAERandProj(torch.nn.Module):
         self.eval_mode = False
 
         if H is None:
-            self.H = F.normalize(torch.randn(self.D_org, self.D_enc), dim = 0)
+            self.H = F.normalize(torch.randn(self.D_org, self.D_enc), dim=0)
         else:
             self.H = H
 
         if phi is None:
-            self.phi = F.normalize(torch.randn(1, self.D_in, self.D_org), dim = 0)
+            self.phi = F.normalize(torch.randn(1, self.D_in, self.D_org), dim=0)
         else:
             self.phi = phi
 
@@ -91,7 +94,7 @@ class CRsAERandProj(torch.nn.Module):
         self.relu = torch.nn.ReLU()
 
     def normalize(self):
-        self.H.data = F.normalize(self.H.data, dim = 0)
+        self.H.data = F.normalize(self.H.data, dim=0)
 
     def forward(self, x):
 
@@ -132,8 +135,9 @@ class CRsAERandProj(torch.nn.Module):
 
         return z, x_new
 
+
 class CRsAERandProjClassifier(torch.nn.Module):
-    def __init__(self, hyp, H = None, phi = None):
+    def __init__(self, hyp, H=None, phi=None):
         super(CRsAERandProjClassifier, self).__init__()
 
         self.T = hyp["num_iters"]
@@ -146,12 +150,12 @@ class CRsAERandProjClassifier(torch.nn.Module):
         self.eval_mode = False
 
         if H is None:
-            self.H = F.normalize(torch.randn(self.D_org, self.D_enc), dim = 0)
+            self.H = F.normalize(torch.randn(self.D_org, self.D_enc), dim=0)
         else:
             self.H = H
 
         if phi is None:
-            self.phi = F.normalize(torch.randn(1, self.D_in, self.D_org), dim = 0)
+            self.phi = F.normalize(torch.randn(1, self.D_in, self.D_org), dim=0)
         else:
             self.phi = phi
 
@@ -169,7 +173,7 @@ class CRsAERandProjClassifier(torch.nn.Module):
         # to be done
 
     def normalize(self):
-        self.H.data = F.normalize(self.H.data, dim = 0)
+        self.H.data = F.normalize(self.H.data, dim=0)
 
     def forward(self, x):
 
@@ -209,10 +213,11 @@ class CRsAERandProjClassifier(torch.nn.Module):
             x_old = x_new
             t_old = t_new
 
-        return self.classifier(x_new.view(-1,self.D_enc))
+        return self.classifier(x_new.view(-1, self.D_enc))
+
 
 class CRsAERandProjAeClassifier(torch.nn.Module):
-    def __init__(self, hyp, H = None, phi = None):
+    def __init__(self, hyp, H=None, phi=None):
         super(CRsAERandProjAeClassifier, self).__init__()
 
         self.T = hyp["num_iters"]
@@ -225,12 +230,12 @@ class CRsAERandProjAeClassifier(torch.nn.Module):
         self.eval_mode = False
 
         if H is None:
-            self.H = F.normalize(torch.randn(self.D_org, self.D_enc), dim = 0)
+            self.H = F.normalize(torch.randn(self.D_org, self.D_enc), dim=0)
         else:
             self.H = H
 
         if phi is None:
-            self.phi = F.normalize(torch.randn(1, self.D_in, self.D_org), dim = 0)
+            self.phi = F.normalize(torch.randn(1, self.D_in, self.D_org), dim=0)
         else:
             self.phi = phi
 
@@ -246,7 +251,7 @@ class CRsAERandProjAeClassifier(torch.nn.Module):
         self.encoding_mode = False
 
     def normalize(self):
-        self.H.data = F.normalize(self.H.data, dim = 0)
+        self.H.data = F.normalize(self.H.data, dim=0)
 
     def forward(self, x):
         if self.encoding_mode:

@@ -17,6 +17,7 @@ sys.path.append("src/")
 
 import utils
 
+
 def train_ae_simulated(net, data_loader, hyp, criterion, optimizer, real_H, PATH):
 
     num_epochs = hyp["num_epochs"]
@@ -40,19 +41,25 @@ def train_ae_simulated(net, data_loader, hyp, criterion, optimizer, real_H, PATH
             net.normalize()
 
             if idx % info_period == 0:
-                print('loss:{:.4f}'.format(loss.item()))
+                print("loss:{:.4f}".format(loss.item()))
 
         err.append(utils.err_H(real_H, net.H.data))
         # ===================log========================
 
-        print('epoch [{}/{}], loss:{:.4f}, err_H:{:.4f}'
-          .format(epoch + 1, num_epochs, loss.item(), err[-1]))
+        print(
+            "epoch [{}/{}], loss:{:.4f}, err_H:{:.4f}".format(
+                epoch + 1, num_epochs, loss.item(), err[-1]
+            )
+        )
 
         torch.save(err[-1], os.path.join(PATH, "err_epoch{}.pt".format(epoch)))
 
     return err
 
-def train_randproj_ae_simulated(net, data_loader, hyp, criterion, optimizer, real_H, phi, PATH, test_loader = None):
+
+def train_randproj_ae_simulated(
+    net, data_loader, hyp, criterion, optimizer, real_H, phi, PATH, test_loader=None
+):
 
     num_epochs = hyp["num_epochs"]
     device = hyp["device"]
@@ -76,7 +83,9 @@ def train_randproj_ae_simulated(net, data_loader, hyp, criterion, optimizer, rea
 
             sample, true_decoder = sample.to(device), true_decoder.to(device)
 
-            img = torch.matmul(true_decoder[i], sample.view(-1, net.D_enc, 1)).view(-1, net.D_in, 1)
+            img = torch.matmul(true_decoder[i], sample.view(-1, net.D_enc, 1)).view(
+                -1, net.D_in, 1
+            )
             # ===================forward=====================
             if len(phi.size()) == 2:
                 img_hat, _ = net(img)
@@ -91,7 +100,7 @@ def train_randproj_ae_simulated(net, data_loader, hyp, criterion, optimizer, rea
             net.normalize()
 
             if idx % info_period == 0:
-                print('loss:{:.4f}'.format(loss.item()))
+                print("loss:{:.4f}".format(loss.item()))
 
         err.append(utils.err_H(real_H.cpu(), net.H.cpu().data))
 
@@ -102,7 +111,9 @@ def train_randproj_ae_simulated(net, data_loader, hyp, criterion, optimizer, rea
 
                 sample, true_decoder = sample.to(device), true_decoder.to(device)
 
-                img = torch.matmul(true_decoder[i], sample.view(-1, net.D_enc, 1)).view(-1, net.D_in, 1)
+                img = torch.matmul(true_decoder[i], sample.view(-1, net.D_enc, 1)).view(
+                    -1, net.D_in, 1
+                )
                 # ===================forward=====================
                 if len(phi.size()) == 2:
                     img_hat, _ = net(img)
@@ -115,11 +126,17 @@ def train_randproj_ae_simulated(net, data_loader, hyp, criterion, optimizer, rea
             min_errH = err[-1]
             net.bestH = net.H.data
         if test_loader == None:
-            print('epoch [{}/{}], loss:{:.4f}, err_H:{:.4f}'
-              .format(epoch + 1, num_epochs, loss.data, err[-1]))
+            print(
+                "epoch [{}/{}], loss:{:.4f}, err_H:{:.4f}".format(
+                    epoch + 1, num_epochs, loss.data, err[-1]
+                )
+            )
         else:
-            print('epoch [{}/{}], loss:{:.4f}, test_loss:{:.4f}, err_H:{:.4f}'
-              .format(epoch + 1, num_epochs, loss.data, test_loss.data, err[-1]))
+            print(
+                "epoch [{}/{}], loss:{:.4f}, test_loss:{:.4f}, err_H:{:.4f}".format(
+                    epoch + 1, num_epochs, loss.data, test_loss.data, err[-1]
+                )
+            )
 
         if test_loader != None:
             if np.abs(test_loss.data - last_test_loss) < 5e-4:
@@ -131,6 +148,7 @@ def train_randproj_ae_simulated(net, data_loader, hyp, criterion, optimizer, rea
         torch.save(loss.item(), os.path.join(PATH, "loss_epoch{}.pt".format(epoch)))
 
     return err
+
 
 def train_ae(net, data_loader, hyp, criterion, optimizer, PATH):
 
@@ -150,7 +168,7 @@ def train_ae(net, data_loader, hyp, criterion, optimizer, PATH):
                 i = idx % net.phi.size(0)
 
             # ===================forward=====================
-            output = net((i,data))
+            output = net((i, data))
             loss = criterion(output[0], torch.matmul(net.phi[i], data))
             # ===================backward====================
             optimizer.zero_grad()
@@ -160,7 +178,7 @@ def train_ae(net, data_loader, hyp, criterion, optimizer, PATH):
             net.normalize()
 
             if idx % info_period == 0:
-                print('loss:{:.4f}'.format(loss.item()))
+                print("loss:{:.4f}".format(loss.item()))
 
         # ===================log========================
 
@@ -168,14 +186,16 @@ def train_ae(net, data_loader, hyp, criterion, optimizer, PATH):
             min_err = loss.item()
             net.bestH = net.H.cpu().data
         err.append(loss.item())
-        print('epoch [{}/{}], loss:{:.4f} '
-          .format(epoch + 1, num_epochs, loss.item()))
+        print("epoch [{}/{}], loss:{:.4f} ".format(epoch + 1, num_epochs, loss.item()))
 
         torch.save(loss.item(), os.path.join(PATH, "loss_epoch{}.pt".format(epoch)))
 
     return err
 
-def train_classifier_encodings(net, data_loader, hyp, criterion, optimizer, val_loader = None, getHs = False):
+
+def train_classifier_encodings(
+    net, data_loader, hyp, criterion, optimizer, val_loader=None, getHs=False
+):
 
     num_epochs = hyp["num_epochs"]
     device = hyp["device"]
@@ -193,7 +213,7 @@ def train_classifier_encodings(net, data_loader, hyp, criterion, optimizer, val_
                 i = idx % net.phi.size(0)
             # ===================forward=====================
 
-            output = net((i,img))
+            output = net((i, img))
 
             loss = criterion(output, c)
             # ===================backward====================
@@ -204,19 +224,23 @@ def train_classifier_encodings(net, data_loader, hyp, criterion, optimizer, val_
             net.normalize()
 
             if idx % info_period == 0:
-                print('loss:{:.4f}'.format(loss.item()))
+                print("loss:{:.4f}".format(loss.item()))
 
         # ===================log========================
         train_acc.append(test_network(data_loader, net, hyp))
         val_acc.append(test_network(val_loader, net, hyp))
         Hs.append(net.H.cpu().data)
-        print('epoch [{}/{}], loss:{:.4f}, train acc:{:.4f}, val acc:{:.4f}'
-          .format(epoch + 1, num_epochs, loss.item(), train_acc[-1], val_acc[-1]))
+        print(
+            "epoch [{}/{}], loss:{:.4f}, train acc:{:.4f}, val acc:{:.4f}".format(
+                epoch + 1, num_epochs, loss.item(), train_acc[-1], val_acc[-1]
+            )
+        )
     if getHs:
         return train_acc, val_acc, Hs
     return train_acc, val_acc
 
-def test_network(data_loader, net, hyp, getExamples = False, getClasses = False):
+
+def test_network(data_loader, net, hyp, getExamples=False, getClasses=False):
 
     device = hyp["device"]
 
@@ -228,32 +252,32 @@ def test_network(data_loader, net, hyp, getExamples = False, getClasses = False)
         examples = 300
         for idx, (img, c) in tqdm(enumerate(data_loader)):
 
-                img = img.to(device)
-                c = c.to(device)
+            img = img.to(device)
+            c = c.to(device)
 
-                img = img.view(-1, net.D_enc, 1)
+            img = img.view(-1, net.D_enc, 1)
 
-                i = idx % net.phi.size(0)
-                # ===================forward=====================
-                output = net((i,img))
+            i = idx % net.phi.size(0)
+            # ===================forward=====================
+            output = net((i, img))
 
-                correct_indicators = output.max(1)[1].data == c
-                num_correct += correct_indicators.sum().item()
-                num_total += c.size()[0]
+            correct_indicators = output.max(1)[1].data == c
+            num_correct += correct_indicators.sum().item()
+            num_total += c.size()[0]
 
-                if getExamples:
-                    count = 0
-                    for j, indicator in enumerate(correct_indicators):
-                        if indicator and len(correct_ex) <= examples:
-                            correct_ex.append((i,img[j], c[j]))
-                        elif not indicator and len(incorrect_ex) <= examples:
-                            incorrect_ex.append((i,img[j], c[j]))
-                        count += 1
-                        if count > 4:
-                            break
-                if getClasses:
-                    correct
-            # ===================log========================
+            if getExamples:
+                count = 0
+                for j, indicator in enumerate(correct_indicators):
+                    if indicator and len(correct_ex) <= examples:
+                        correct_ex.append((i, img[j], c[j]))
+                    elif not indicator and len(incorrect_ex) <= examples:
+                        incorrect_ex.append((i, img[j], c[j]))
+                    count += 1
+                    if count > 4:
+                        break
+            if getClasses:
+                correct
+        # ===================log========================
 
     acc = num_correct / num_total
     if getExamples:
