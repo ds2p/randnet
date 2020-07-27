@@ -1,6 +1,6 @@
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
+# Visit https://github.com/btolooshams/randnet for code.
 
-# RandNet: deep learning with compressed measurements of images
+## RandNet: deep learning with compressed measurements of images
 
 code for the paper
 
